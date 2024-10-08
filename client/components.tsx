@@ -109,28 +109,24 @@ export function GoogleSignInButton({
   children,
   className,
   method = "popup",
-  checkUserExists,
-  onExistingUsers,
+  onSignInSuccess,
 }: {
   children?: React.ReactNode;
   className?: string;
   method?: "popup" | "redirect";
-  checkUserExists: (user: any) => Promise<boolean>;
-  onExistingUsers?: (user: any) => void;
+  onSignInSuccess?: (user: any) => void;
 }) {
   const doSignInWithGoogle = async () => {
     const provider = new GoogleAuthProvider();
     try {
-      const resp = await signInWithPopup(auth, provider);
-      if (resp && resp.user) {
-        const userExists = await checkUserExists(resp.user);
-        if (userExists && onExistingUsers) {
-          onExistingUsers(resp.user);
-        } else {
-          setTimeout(() => {
-            window.location.reload();
-          }, 2500);
+      const result = await signInWithPopup(auth, provider);
+      if (result.user) {
+        if (onSignInSuccess) {
+          onSignInSuccess(result.user);
         }
+        setTimeout(() => {
+          window.location.reload();
+        }, 2500);
       }
     } catch (error) {
       console.error("Google 로그인 오류:", error);
@@ -139,11 +135,7 @@ export function GoogleSignInButton({
 
   const doSignInWithGoogleRedirect = async () => {
     const provider = new GoogleAuthProvider();
-    try {
-      await signInWithRedirect(auth, provider);
-    } catch (error) {
-      console.error("Google 리디렉션 로그인 오류:", error);
-    }
+    signInWithRedirect(auth, provider);
   };
 
   function GoogleLogo({ height = 24, width = 24, ...props }) {
@@ -153,6 +145,7 @@ export function GoogleSignInButton({
         height={height}
         viewBox="0 0 24 24"
         width={width}
+        {...props}
       >
         <path
           d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
@@ -310,6 +303,7 @@ export function EmailSignUpButton({
   setErrorMessage,
   className,
   setLoading,
+  onSignUpSuccess,
 }: {
   children: React.ReactNode;
   email: string;
@@ -317,6 +311,7 @@ export function EmailSignUpButton({
   setErrorMessage: (msg: string) => void;
   className?: string;
   setLoading?: (loading: boolean) => void;
+  onSignUpSuccess?: (user: any) => void;
 }) {
   async function doCreateUserWithEmailAndPassword() {
     if (setLoading) setLoading(true);
@@ -326,7 +321,10 @@ export function EmailSignUpButton({
         email,
         password
       );
-      if (userCredential) {
+      if (userCredential.user) {
+        if (onSignUpSuccess) {
+          onSignUpSuccess(userCredential.user);
+        }
         setTimeout(() => {
           window.location.reload();
         }, 2500);
